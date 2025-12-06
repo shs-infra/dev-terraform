@@ -1,4 +1,7 @@
 provider "aws" {
     region = "us-east-1"
-    profile = "shared"
+    
+    assume_role {
+        role_arn = "arn:aws:iam::407894219710:role/TerraformExecutionRole"
+    }
 }
