@@ -57,3 +57,34 @@ resource "aws_iam_role_policy_attachment" "attach_assume_policy" {
     role = aws_iam_role.github_oidc_role.name
     policy_arn = aws_iam_policy.github_oidc_assume_policy.arn
 }
+
+resource "aws_iam_policy" "github_backend_access" {
+    name = "GitHubOIDCBackendAccess"
+    description = "Granted GitHub Actions OIDC role read/write access to Terraform remote backend state"
+
+    policy = jsonencode({
+        Version = "2012-10-17"
+        Statement = [
+            {
+                Effect = "Allow"
+                Action = [
+                    "s3:ListBucket"
+                ]
+                Resource = "arn:aws:s3:::terraform-remote-backend-shared-services-state"
+            },
+            {
+                Effect = "Allow"
+                Action = [
+                    "s3:GetObject",
+                    "s3:PutObject"
+                ]
+                Resource = "arn:aws:s3:::terraform-remote-backend-shared-services-state/*"
+            }
+        ]
+    })
+}
+
+resource "aws_iam_role_policy_attachment" "github_backend_access_attach" {
+    role = aws_iam_role.github_oidc_role.name
+    policy_arn = aws_iam_policy.github_backend_access.arn
+}
