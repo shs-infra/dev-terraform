@@ -71,6 +71,11 @@ resource "aws_iam_policy" "github_backend_access" {
                     "s3:ListBucket"
                 ]
                 Resource = "arn:aws:s3:::terraform-remote-backend-shared-services-state"
+                Condition = {
+                    StringLike = {
+                        "s3:prefix" = "dev/*"
+                    }
+                }
             },
             {
                 Effect = "Allow"
@@ -78,7 +83,7 @@ resource "aws_iam_policy" "github_backend_access" {
                     "s3:GetObject",
                     "s3:PutObject"
                 ]
-                Resource = "arn:aws:s3:::terraform-remote-backend-shared-services-state/*"
+                Resource = "arn:aws:s3:::terraform-remote-backend-shared-services-state/dev/*"
             }
         ]
     })
