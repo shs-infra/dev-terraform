@@ -1,0 +1,29 @@
+name: "Base Module Contract Test"
+
+on:
+    pull_request:
+        branches: [ main ]
+        paths:
+            - 'modules/base/**'
+
+jobs:
+    contract-validation:
+        name: "Verify Contract Logic"
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                terraform_version: "1.13"
+
+            - name: Terraform Init
+              run: terraform init -input=false
+              working-directory: ./modules/base/dynamodb
+
+            - name: Terraform Test
+              run: terraform test
+              working-directory: ./modules/base/dynamodb
