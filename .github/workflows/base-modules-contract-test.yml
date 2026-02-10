@@ -3,27 +3,55 @@ name: "Base Module Contract Test"
 on:
     pull_request:
         branches: [ main ]
-        paths:
-            - 'modules/base/**'
 
 jobs:
-    contract-validation:
-        name: "Verify Contract Logic"
-        runs-on: ubuntu-latest
+    changes:
+      runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout repo
-              uses: actions/checkout@v4
+      permissions:
+        pull-requests: read
+      outputs:
+        modules: ${{ steps.filter.outputs.changes }}
+      steps:
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            dynamodb: 
+              - 'modules/base/dynamodb/**'
+            lambda:
+              - 'modules/base/lambda/**'
 
-            - name: Setup Terraform
-              uses: hashicorp/setup-terraform@v3
-              with:
-                terraform_version: "1.13"
+      - name: Debug filter output
+        run: echo "modules=${{ steps.filter.outputs.changes }}"
 
-            - name: Terraform Init
-              run: terraform init -input=false
-              working-directory: ./modules/base/dynamodb
+    build:
+      needs: changes
+      if: needs.changes.outputs.modules != '[]'
+      strategy:
+        matrix:
+          module: ${{ fromJson(needs.changes.outputs.modules) }}
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
 
-            - name: Terraform Test
-              run: terraform test
-              working-directory: ./modules/base/dynamodb
+        - name: Debug matrix
+          run: echo "module=${{ matrix.module }}"
+
+        - name: Show working dir
+          run: pwd && ls -la
+          working-directory: modules/base/${{ matrix.module }}
+
+        - name: Setup Terraform
+          uses: hashicorp/setup-terraform@v3
+          with:
+            terraform_version: "1.13.5"
+
+        - name: Terraform Init
+          run: terraform init -input=false
+          working-directory: modules/base/${{ matrix.module }}
+        
+        - name: Terraform Test
+          run: terraform test -no-color
+          working-directory: modules/base/${{ matrix.module }}
