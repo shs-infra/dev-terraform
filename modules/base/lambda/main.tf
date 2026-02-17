@@ -89,6 +89,10 @@ resource "aws_lambda_function" "this" {
 
   tags = var.tags
 
+  lifecycle {
+    ignore_changes = [image_uri]
+  }
+
   depends_on = [
     aws_cloudwatch_log_group.this,
     aws_iam_role_policy_attachment.basic_logs,
