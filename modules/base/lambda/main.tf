@@ -69,7 +69,12 @@ resource "aws_lambda_function" "this" {
   architectures = [var.architectures]
 
   environment {
-    variables = var.environment_variables
+    variables = merge(
+      var.environment_variables,
+      {
+        LOG_LEVEL = var.log_level
+      }
+    )
   }
 
   tracing_config {
@@ -78,6 +83,7 @@ resource "aws_lambda_function" "this" {
 
   logging_config {
     log_format = "JSON"
+    application_log_level = var.log_level
     log_group  = aws_cloudwatch_log_group.this.name
   }
 

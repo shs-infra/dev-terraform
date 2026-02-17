@@ -97,6 +97,18 @@ variable "environment_variables" {
   nullable    = false
 }
 
+variable "log_level" {
+  description = "Log level for application logs sent to CloudWatch"
+  type = string
+  nullable = false
+  default = "WARN"
+
+  validation {
+    condition = contains(["DEBUG", "INFO", "WARN", "ERROR"], var.log_level)
+    error_message = "log_level must be one of: DEBUG, INFO, WARN, ERROR"
+  }
+}
+
 variable "log_retention_days" {
   description = "CloudWatch log retention"
   type        = number
