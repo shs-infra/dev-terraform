@@ -61,3 +61,51 @@ resource "aws_iam_role_policy" "dynamodb_access_policy" {
         module.db
     ]
 }
+
+module "api" {
+  source = "../../base/api-gateway"
+
+  name = "${local.service_prefix}-api"
+
+  access_logs = {
+    retention = local.log_retention
+  }
+
+  custom_domain = var.custom_domain
+
+  tags = local.service_tags
+}
+
+resource "aws_apigatewayv2_integration" "lambda" {
+  api_id = module.api.api_id
+
+  integration_type = "AWS_PROXY"
+
+  integration_uri = module.lambda.invoke_arn
+
+  payload_format_version = "2.0"
+
+  timeout_milliseconds = 10000
+}
+
+resource "aws_apigatewayv2_route" "this" {
+  for_each = local.route_map
+
+  api_id = module.api.api_id
+
+  route_key = each.key
+
+  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_lambda_permission" "apigw" {
+  statement_id = "${local.service_prefix}-AllowExecutionFromAPIGateway"
+
+  action = "lambda:InvokeFunction"
+
+  function_name = module.lambda.function_arn
+
+  principal = "apigateway.amazonaws.com"
+
+  source_arn = "${module.api.execution_arn}/*/*"
+}
